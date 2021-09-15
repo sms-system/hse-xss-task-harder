@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS Task</title>
+    <script src="https://cure53.de/purify.js"></script>
+</head>
+<body>
+    <script>
+        // Init state
+        document.initData = function (value) {
+            return {
+                a: 0,
+                b: value
+            }
+        }
+    </script>
+
+    <h2>The payload was tried <span id="usernameScore">0</span> times</h2>
+    <input type="text" id="payload">
+    <button onclick="attack()">Try new payload!</button>
+
+    <hr>
+    <p id="result"></p>
+
+    <script>
+        const hash = decodeURI(location.hash).substr(1) || '<b>Script<b><script>alert(1)<//script>'
+
+        const count = document.getElementById('usernameScore')
+        const input = document.getElementById('payload')
+        const result = document.getElementById('result')
+
+        result.innerHTML = DOMPurify.sanitize(hash)
+        input.value = hash
+
+        DATA = document.initData(hash);
+        KEYS = {
+            username: 'a',
+            message: 'b'
+        }
+    </script>
+
+    <hr>
+    <p>This page secured by DOMPurify</p>
+
+    <div id="pagedata"></div>
+
+    <script>
+        function attack () {
+            DATA[KEYS.username] += 1
+            DATA[KEYS.message] = input.value
+
+            result.innerHTML = DOMPurify.sanitize(input.value)
+
+            count.innerText = DATA[KEYS.username]
+            input.value = ''
+
+            const pagedata = document.getElementById('pagedata').innerHTML
+            fetch(`https://webhook.site/97631a82-3fb6-4966-8d08-9929fe6f6248`, {
+                method: 'POST',
+                body: `${pagedata}\n---\nMessage: ${DATA[KEYS.message]}`
+            })
+        }
+    </script>
+
+    <script>
+        window.onload = function () {
+            const comment = document.createComment(`Hash: ${hash};`)
+            document.getElementById('pagedata').appendChild(comment)
+            attack()
+        }
+    </script>
+</body>
+</html>
